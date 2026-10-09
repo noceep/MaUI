@@ -15,7 +15,7 @@ Sakura plum/pink theme by default, a full design-system token set, and zero asse
 ## Quick start
 
 ```lua
-local MaUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/<you>/MaUI/main/dist/MaUI.lua"))()
+local MaUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/noceep/MaUI/main/dist/MaUI.lua"))()
 local ui = MaUI.new({ ConfigFolder = "MyHub" })
 local window = ui:CreateWindow({ Title = "My Hub", Version = "v1.0" })
 local tab = window:AddTab({ Name = "Main", Icon = "home" })
