@@ -1,5 +1,5 @@
 -- MaUI example. Run in an executor that provides gethui/writefile.
-loadstring(game:HttpGet("https://raw.githubusercontent.com/noceep/MaUI/main/dist/MaUI.lua"))()
+local MaUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/noceep/MaUI/main/dist/MaUI.lua"))()
 
 local ui = MaUI.new({ Name = "MaUIExample", ConfigFolder = "MaUIExample" })
 
