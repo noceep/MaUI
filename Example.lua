@@ -1,4 +1,4 @@
--- MaUI example. Run in an executor that provides gethui/writefile.
+
 local MaUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/noceep/MaUI/main/dist/MaUI.lua"))()
 
 local ui = MaUI.new({ Name = "MaUIExample", ConfigFolder = "MaUIExample" })
@@ -35,12 +35,14 @@ local sub = main:AddSubTabs()
 sub:AddTab("One"):AddSection("First")
 sub:AddTab("Two"):AddSection("Second")
 
-local settings = window:AddTab({ Name = "Settings", Icon = "gear" })
-settings:AddThemeEditor()
-settings:AddConfigManager()
+-- A Settings tab (interface, keybinds, theme editor, configs) is added automatically.
+-- Pass `Settings = false` to CreateWindow to disable it.
 
--- Floating overlay and Dynamic Island
-local overlay = ui:CreateOverlayWindow({ Title = "Overlay" })
-local island = ui:CreateIsland({ Title = "MaUI" })
+-- Dynamic Island: only visible while the window is hidden; click it to reopen the window. Drag to move it.
+local island = ui:CreateIsland({ Window = window, Icon = "bolt", Text = "MaUI Hub", Metric = "60 fps" })
+island:SetMetric(1, { Name = "FPS", Value = 60, Max = 120 })
+
+-- Floating overlay window: a small always-on-top panel the script author controls (logs, stats...). Optional.
+-- local overlay = ui:CreateOverlayWindow({ Title = "Logs" })
 
 ui:LoadAutoload()
