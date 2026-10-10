@@ -4946,7 +4946,7 @@ end
 
 local function setIcon(button, name)
 	local kind, value = Icons.Resolve(name)
-	local icon = button.Icon
+	local icon = Kit.IconOf(button)
 	if not (kind and icon) then
 		return
 	end
@@ -8035,10 +8035,11 @@ function Window:Collapse(collapsed)
 	if self.Grip then
 		self.Grip.Visible = not collapsed
 	end
-	if self.CollapseButton and self.CollapseButton.Icon then
+	local collapseIcon = self.CollapseButton and Kit.IconOf(self.CollapseButton)
+	if collapseIcon then
 		local kind, glyph = Icons.Resolve(collapsed and "plus" or "minus")
 		if kind == "glyph" then
-			self.CollapseButton.Icon.Text = glyph
+			collapseIcon.Text = glyph
 		end
 	end
 	local target = collapsed and UDim2.fromOffset(root.Size.X.Offset, ctx.Metrics.Header + 1) or self._expandedSize
@@ -8082,10 +8083,11 @@ function Window:SetFullscreen(fullscreen)
 	elseif self._restore then
 		ctx.Tween:To(root, self._restore, Motion.Slow)
 	end
-	if self.ExpandButton and self.ExpandButton.Icon then
+	local expandIcon = self.ExpandButton and Kit.IconOf(self.ExpandButton)
+	if expandIcon then
 		local kind, glyph = Icons.Resolve(fullscreen and "shrink" or "expand")
 		if kind == "glyph" then
-			self.ExpandButton.Icon.Text = glyph
+			expandIcon.Text = glyph
 		end
 	end
 	if fullscreen then
@@ -8917,7 +8919,12 @@ function Kit.RowHover(ctx, maid, button, frame)
 end
 
 -- Icon-only button (28 px; 36 on touch). options: Icon, Tooltip (string|table), Callback, Name, Parent,
--- Position/AnchorPoint, LayoutOrder, Size. Returns the TextButton; button.Icon is the glyph/image.
+-- Position/AnchorPoint, LayoutOrder, Size. Returns the TextButton; Kit.IconOf(button) is the glyph/image.
+-- The icon child of a Kit.IconButton (instances cannot carry custom fields in real Roblox).
+function Kit.IconOf(button)
+	return button and button:FindFirstChild("Icon") or nil
+end
+
 function Kit.IconButton(ctx, maid, options)
 	local size = options.Size or (ctx.Touch and 36 or 28)
 	local button = Create("TextButton", {
@@ -8942,7 +8949,6 @@ function Kit.IconButton(ctx, maid, options)
 		Position = UDim2.fromScale(0.5, 0.5),
 		Parent = button,
 	})
-	button.Icon = icon
 	local function tint(token, bg)
 		if icon then
 			ctx.Tween:To(icon, { [Icons.ColorProperty(icon)] = ctx.Theme:Get(token) }, Tokens.Motion.Fast)
