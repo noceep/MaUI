@@ -1,6 +1,5 @@
 # MaUI
 
-A compact, modern Roblox UI library for script executors (`gethui`, `writefile`, `loadstring`).
 Sakura plum/pink theme by default, a full design-system token set, and zero asset dependencies.
 
 ## Features
