@@ -1865,6 +1865,7 @@ __defs["Components/DynamicIsland"] = function(require)
 -- the island is expanded and visible.
 local Env = require("Core/Env")
 local Icons = require("Core/Icons")
+local Input = require("Core/Input")
 local Kit = require("Core/Kit")
 local Maid = require("Core/Maid")
 local Signal = require("Core/Signal")
@@ -2046,6 +2047,8 @@ function DynamicIsland.new(library, options)
 
 	self:_buildPill()
 	self:_buildContent()
+	self:_bindDrag(self.Pill)
+	self:_bindDrag(self.Header)
 
 	-- hover (desktop) ------------------------------------------------------------------------------------------------
 	if not touch then
@@ -2074,6 +2077,9 @@ function DynamicIsland.new(library, options)
 	self.Visible = options.Visible ~= false
 	if options.Pinned then
 		self:Pin(true)
+	end
+	if options.Window then
+		self:LinkWindow(options.Window)
 	end
 	return self
 end
@@ -2105,12 +2111,72 @@ function DynamicIsland:_buildPill()
 	self.PillCount.Visible = false
 
 	self.Maid:Give(self.Pill.MouseButton1Click:Connect(function()
-		if ctx.Touch then
+		if self:_wasDragged() then
+			return
+		end
+		if self.Window then
+			self:_openWindow()
+		elseif ctx.Touch then
 			self:Expand()
 		else
 			self:Pin(not self.Pinned)
 		end
 	end))
+end
+
+-- Dragging -----------------------------------------------------------------------------------------------------------
+-- The pill and the expanded header move the island. A press that moved less than DRAG_THRESHOLD pixels is a click.
+local DRAG_THRESHOLD = 4
+
+function DynamicIsland:_wasDragged()
+	local moved = self._moved or 0
+	self._moved = 0
+	return moved >= DRAG_THRESHOLD
+end
+
+function DynamicIsland:_bindDrag(handle)
+	local ctx = self.Ctx
+	self.Maid:Give(handle.InputBegan:Connect(function(input)
+		if not Input.IsPointerDown(input) or self.Destroyed then
+			return
+		end
+		self._moved = 0
+		ctx.Input:Capture(self, input, function(moveInput)
+			local delta = moveInput.Delta
+			self._moved = self._moved + math.abs(delta.X) + math.abs(delta.Y)
+			if self._moved < DRAG_THRESHOLD then
+				return
+			end
+			local base = self._basePosition
+			self._basePosition = UDim2.new(base.X.Scale, base.X.Offset + delta.X, base.Y.Scale, base.Y.Offset + delta.Y)
+			self._custom = true
+			local size = self.Root.Size
+			self._basePosition = self:_positionFor(Vector2.new(size.X.Offset, size.Y.Offset))
+			self.Root.Position = self._basePosition
+		end, nil)
+	end))
+end
+
+-- Companion window: the island only shows while the window is hidden, and clicking it opens the window.
+function DynamicIsland:LinkWindow(window)
+	if self.Destroyed or not window then
+		return
+	end
+	self.Window = window
+	self.Maid:Give(window.OpenChanged:Connect(function(open)
+		if open then
+			self:Collapse()
+		end
+		self:SetVisible(not open)
+	end))
+	self:SetVisible(not window.Open)
+end
+
+function DynamicIsland:_openWindow()
+	local window = self.Window
+	if window and not window.Destroyed then
+		window:Toggle(true)
+	end
 end
 
 local function row(ctx, parent, name, height, order, horizontal)
@@ -2163,7 +2229,12 @@ function DynamicIsland:_buildContent()
 	}, "Accent", "Bold")
 	self.Header = header
 	self.Maid:Give(header.MouseButton1Click:Connect(function()
-		if ctx.Touch and not self.Pinned then
+		if self:_wasDragged() then
+			return
+		end
+		if self.Window then
+			self:_openWindow()
+		elseif ctx.Touch and not self.Pinned then
 			self:Collapse()
 		end
 	end))
@@ -7872,6 +7943,17 @@ function Window:SetSession(config)
 		return nil
 	end
 	local options = type(config) == "table" and Util.Copy(config) or {}
+	if options.Callback == nil then
+		-- default: the card leads to the Home tab
+		options.Callback = function()
+			if self.Home and not self.Destroyed then
+				if not self.Open then
+					self:Toggle(true)
+				end
+				self:SelectTab(self.Home)
+			end
+		end
+	end
 	if options.Name == nil then
 		local ok, player = pcall(function()
 			return game:GetService("Players").LocalPlayer
@@ -8499,10 +8581,10 @@ __defs["Core/Icons"] = function(require)
 local Icons = {}
 
 local glyphs = {
-	home = "⌂", settings = "⚙", search = "⌕", close = "✕", check = "✓", plus = "+", minus = "–",
+	home = "⌂", settings = "≡", search = "⌕", close = "✕", check = "✓", plus = "+", minus = "–",
 	chevron = "▾", chevronRight = "▸", info = "i", warning = "!", error = "✕", success = "✓",
 	star = "★", dot = "●", user = "☺", copy = "⧉", refresh = "⟳", folder = "▤", palette = "◐",
-	bolt = "ϟ", keyboard = "⌨", gear = "⚙", eye = "◉", eyeOff = "○", expand = "⤢", shrink = "⤡", play = "▶", loading = "◜",
+	bolt = "ϟ", keyboard = "▦", gear = "≡", eye = "◉", eyeOff = "○", expand = "⤢", shrink = "⤡", play = "▶", loading = "◜",
 }
 local assets = {}
 
